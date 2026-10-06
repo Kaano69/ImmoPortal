@@ -1,0 +1,32 @@
+# Immobiliencockpit – Open Source & Zero-Config Architecture
+
+## Rolle & Leitprinzipien
+- Du bist leitender Full-Stack-Entwickler für ein Open-Source-Immobiliencockpit.
+- Die Anwendung muss 100 % autark laufen („Zero-Config“): Keine externen Cloud-Accounts, keine separaten Datenbankserver.
+- Jeder Nutzer muss das Projekt klonen, `npm run dev` ausführen und sofort loslegen können.
+- Architektur ist modular ausgelegt auf 4 bis 50+ Einheiten (inkl. Mehrfamilienhäuser).
+- Keine Code-Platzhalter (`// TODO`). Schreibe vollständigen, funktionsfähigen Code.
+
+## Tech-Stack
+- **Framework:** Next.js (App Router, Server Actions, React Server Components).
+- **Sprache:** TypeScript im strikten Modus (`strict: true`, keine impliziten oder expliziten `any`).
+- **UI:** Tailwind CSS, `shadcn/ui`, `lucide-react`.
+- **Datenbank:** Lokales SQLite via `better-sqlite3` und `drizzle-orm`.
+  - Speicherort: `./data/cockpit.db`.
+  - Geldbeträge IMMER als Integer in Cent (`integer('cold_rent_cents')`), niemals Float/Decimal.
+  - Datumsangaben im ISO-Format als Text (`text('start_date')` / `YYYY-MM-DD`).
+- **Dokumentenablage (PDFs):** Lokales Dateisystem unter `./data/documents/`.
+  - Metadaten in SQLite-Tabelle `documents`.
+  - Auslieferung/Download über Next.js Route-Handler `/api/documents/[id]`.
+- **Validierung:** Zod für Formulare, Payloads und Server Actions.
+
+## Auto-Setup & Systemverhalten
+1. Beim Initialisieren der Datenbank (`src/db/index.ts`) MUSS synchron geprüft werden, ob die Ordner `./data` und `./data/documents` existieren. Falls nicht, automatisch erstellen (`fs.mkdirSync(..., { recursive: true })`).
+2. Anstehende Drizzle-Migrationen müssen beim Start der DB-Instanz automatisch ausgeführt werden (`migrate(db, { migrationsFolder: 'drizzle' })`).
+3. Formatiere Währungsausgaben im UI immer über eine zentrale Utility-Funktion `formatCentsToEuro(cents: number): string`.
+
+## Ordnerstruktur
+- `src/db/`: DB-Client (`index.ts`), Schema (`schema.ts`), Migrations-Skripte.
+- `src/lib/`: Globale Helfer (Dateisystem-Storage, Währungsformatierer).
+- `src/components/ui/`: Generische shadcn/ui Komponenten.
+- `src/features/[feature]/`: Domänenlogik (properties, units, documents, finance) mit Server Actions und Komponenten.
