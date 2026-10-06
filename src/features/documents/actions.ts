@@ -6,11 +6,8 @@ import { z } from "zod";
 
 import { db } from "@/db";
 import { DOCUMENT_CATEGORIES, documents, properties, units } from "@/db/schema";
+import type { ActionResult } from "@/lib/action-result";
 import { deleteDocumentFile, saveDocumentFile, StorageError } from "@/lib/storage";
-
-export type ActionResult<T = undefined> =
-  | ({ success: true } & (T extends undefined ? object : { data: T }))
-  | { success: false; error: string };
 
 /** Leere Formularfelder (`""`) werden wie fehlende Felder behandelt. */
 const optionalId = z.preprocess(

@@ -56,6 +56,7 @@ export const properties = sqliteTable("properties", {
   street: text("street").notNull(),
   zip: text("zip").notNull(),
   city: text("city").notNull(),
+  buildYear: integer("build_year"),
   purchaseYear: integer("purchase_year"),
   totalSqm: real("total_sqm"),
   createdAt: createdAt(),

@@ -36,6 +36,37 @@ export function formatDate(dateStr: string): string {
   return dateFormatter.format(date);
 }
 
+/** Formatiert einen Monat (`YYYY-MM`), z. B. "2026-10" → "Oktober 2026". */
+export function formatYearMonth(yearMonth: string): string {
+  const [year, month] = yearMonth.split("-").map(Number);
+  if (!year || !month) return FALLBACK;
+  return new Intl.DateTimeFormat("de-DE", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(year, month - 1, 1)));
+}
+
+/** Formatiert eine Dateigröße, z. B. 1536 → "1,5 KB". */
+export function formatFileSize(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes < 0) return FALLBACK;
+  if (bytes < 1024) return `${bytes} B`;
+  const units = ["KB", "MB", "GB"];
+  let value = bytes / 1024;
+  let index = 0;
+  while (value >= 1024 && index < units.length - 1) {
+    value /= 1024;
+    index += 1;
+  }
+  return `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(value)} ${units[index]}`;
+}
+
+/** Formatiert einen Prozentwert, z. B. 12.5 → "12,5 %". */
+export function formatPercent(percent: number): string {
+  if (!Number.isFinite(percent)) return FALLBACK;
+  return `${new Intl.NumberFormat("de-DE", { maximumFractionDigits: 1 }).format(percent)} %`;
+}
+
 /** Formatiert eine Fläche in m², z. B. 64.5 → "64,5 m²". */
 export function formatSqm(sqm: number): string {
   if (!Number.isFinite(sqm)) return FALLBACK;

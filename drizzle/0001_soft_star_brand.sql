@@ -1,0 +1,1 @@
+ALTER TABLE `properties` ADD `build_year` integer;
