@@ -6,6 +6,7 @@ export const PROPERTY_FIELDS = [
   "zip",
   "city",
   "totalSqm",
+  "marketValue",
   "buildYear",
   "purchaseYear",
 ] as const;

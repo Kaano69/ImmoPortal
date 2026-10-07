@@ -59,6 +59,7 @@ export const properties = sqliteTable("properties", {
   buildYear: integer("build_year"),
   purchaseYear: integer("purchase_year"),
   totalSqm: real("total_sqm"),
+  marketValueCents: integer("market_value_cents"),
   createdAt: createdAt(),
 });
 

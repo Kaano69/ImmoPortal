@@ -1,0 +1,1 @@
+ALTER TABLE `properties` ADD `market_value_cents` integer;

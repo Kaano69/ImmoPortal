@@ -33,6 +33,9 @@ const propertySchema = z.object({
   totalSqm: optionalNumber("Bitte eine gültige Zahl angeben.", (schema) =>
     schema.positive("Die Fläche muss größer als 0 sein.").max(1_000_000, "Die Fläche ist zu groß."),
   ),
+  marketValue: optionalNumber("Bitte einen gültigen Betrag angeben.", (schema) =>
+    schema.positive("Der Wert muss größer als 0 sein.").max(1_000_000_000, "Der Wert ist zu groß."),
+  ),
   buildYear: year("Bitte ein gültiges Baujahr angeben."),
   purchaseYear: year("Bitte ein gültiges Kaufjahr angeben."),
 });
@@ -44,6 +47,8 @@ function toRow(data: z.output<typeof propertySchema>) {
     zip: data.zip,
     city: data.city,
     totalSqm: data.totalSqm ?? null,
+    marketValueCents:
+      data.marketValue === undefined ? null : Math.round(data.marketValue * 100),
     buildYear: data.buildYear ?? null,
     purchaseYear: data.purchaseYear ?? null,
   };

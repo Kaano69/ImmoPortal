@@ -10,6 +10,7 @@ export type PropertyDefaults = {
   zip: string;
   city: string;
   totalSqm: string;
+  marketValue: string;
   buildYear: string;
   purchaseYear: string;
 };
@@ -57,14 +58,24 @@ export function PropertyFields({
           required
         />
       </div>
-      <InputField
-        name="totalSqm"
-        label="Wohnfläche (m²)"
-        state={state}
-        defaultValue={defaults?.totalSqm}
-        inputMode="decimal"
-        placeholder="z. B. 320,5"
-      />
+      <div className="grid grid-cols-2 gap-4">
+        <InputField
+          name="totalSqm"
+          label="Wohnfläche (m²)"
+          state={state}
+          defaultValue={defaults?.totalSqm}
+          inputMode="decimal"
+          placeholder="z. B. 320,5"
+        />
+        <InputField
+          name="marketValue"
+          label="Marktwert (€)"
+          state={state}
+          defaultValue={defaults?.marketValue}
+          inputMode="decimal"
+          placeholder="z. B. 460.000"
+        />
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <InputField
           name="buildYear"

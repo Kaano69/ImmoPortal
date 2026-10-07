@@ -14,7 +14,7 @@ import { getPropertyDetail } from "@/features/properties/queries";
 import { CreateUnitDialog } from "@/features/units/components/unit-dialogs";
 import { UnitsTable } from "@/features/units/components/units-table";
 import { currentYearMonth, isYearMonth } from "@/lib/dates";
-import { formatDate, formatSqm } from "@/lib/formatters";
+import { formatCentsToEuro, formatDate, formatSqm } from "@/lib/formatters";
 
 // Die Daten kommen aus der lokalen SQLite-DB und dürfen nicht beim Build eingefroren werden.
 export const dynamic = "force-dynamic";
@@ -79,6 +79,10 @@ export default async function PropertyDetailPage({ params, searchParams }: PageP
               zip: property.zip,
               city: property.city,
               totalSqm: property.totalSqm === null ? "" : String(property.totalSqm).replace(".", ","),
+              marketValue:
+                property.marketValueCents === null
+                  ? ""
+                  : (property.marketValueCents / 100).toFixed(2).replace(".", ","),
               buildYear: property.buildYear === null ? "" : String(property.buildYear),
               purchaseYear: property.purchaseYear === null ? "" : String(property.purchaseYear),
             }}
@@ -91,7 +95,7 @@ export default async function PropertyDetailPage({ params, searchParams }: PageP
           <CardTitle>Stammdaten</CardTitle>
         </CardHeader>
         <CardContent>
-          <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
             <MasterDatum label="Straße" value={property.street} />
             <MasterDatum label="PLZ / Ort" value={`${property.zip} ${property.city}`} />
             <MasterDatum
@@ -105,6 +109,14 @@ export default async function PropertyDetailPage({ params, searchParams }: PageP
             <MasterDatum
               label="Kaufjahr"
               value={property.purchaseYear === null ? "–" : String(property.purchaseYear)}
+            />
+            <MasterDatum
+              label="Marktwert"
+              value={
+                property.marketValueCents === null
+                  ? "–"
+                  : formatCentsToEuro(property.marketValueCents)
+              }
             />
             <MasterDatum label="Angelegt am" value={formatDate(property.createdAt)} />
           </dl>
