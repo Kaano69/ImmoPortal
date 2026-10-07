@@ -122,6 +122,8 @@ export type UnitDetail = {
 
 export type DocumentDetail = {
   id: string;
+  unitId: string | null;
+  tags: string[];
   fileName: string;
   fileSizeBytes: number;
   category: DocumentCategory;
@@ -171,6 +173,8 @@ export async function getPropertyDetail(id: string): Promise<PropertyDetail | nu
   const documentDetails = property.documents
     .map<DocumentDetail>((document) => ({
       id: document.id,
+      unitId: document.unitId,
+      tags: document.tags,
       fileName: document.fileName,
       fileSizeBytes: document.fileSizeBytes,
       category: document.category,

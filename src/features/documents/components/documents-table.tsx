@@ -1,4 +1,4 @@
-import { Download, ExternalLink, FileText } from "lucide-react";
+import { Download, ExternalLink } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,33 +10,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { DocumentCategory } from "@/db/schema";
 import type { DocumentDetail } from "@/features/properties/queries";
 import { formatDate, formatFileSize } from "@/lib/formatters";
 import { DOCUMENT_CATEGORY_LABELS } from "@/lib/labels";
 
 import { DeleteDocumentButton } from "./delete-document-button";
 
-const CATEGORY_VARIANT: Record<DocumentCategory, "default" | "warning" | "secondary" | "outline"> = {
-  contract: "default",
-  invoice: "warning",
-  protocol: "secondary",
-  other: "outline",
-};
-
 export function DocumentsTable({ documents }: { documents: DocumentDetail[] }) {
-  if (documents.length === 0) {
-    return (
-      <div className="flex flex-col items-center gap-2 py-10 text-center">
-        <FileText className="size-8 text-muted-foreground" aria-hidden />
-        <p className="font-medium">Noch keine Dokumente archiviert</p>
-        <p className="text-sm text-muted-foreground">
-          Ziehe oben eine PDF in das Upload-Feld.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <Table>
       <TableHeader>
@@ -54,15 +34,30 @@ export function DocumentsTable({ documents }: { documents: DocumentDetail[] }) {
       <TableBody>
         {documents.map((document) => (
           <TableRow key={document.id}>
-            <TableCell className="max-w-72 truncate font-medium" title={document.fileName}>
-              {document.fileName}
+            <TableCell className="max-w-72 whitespace-normal">
+              <div className="truncate font-medium" title={document.fileName}>
+                {document.fileName}
+              </div>
+              {document.tags.length > 0 ? (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {document.tags.map((tag) => (
+                    <Badge key={tag} variant="outline" className="font-normal">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              ) : null}
             </TableCell>
             <TableCell>
-              <Badge variant={CATEGORY_VARIANT[document.category]}>
-                {DOCUMENT_CATEGORY_LABELS[document.category]}
-              </Badge>
+              <Badge variant="secondary">{DOCUMENT_CATEGORY_LABELS[document.category]}</Badge>
             </TableCell>
-            <TableCell>{document.unitNumber ?? "–"}</TableCell>
+            <TableCell>
+              {document.unitNumber ? (
+                <Badge variant="default">{document.unitNumber}</Badge>
+              ) : (
+                <Badge variant="outline">Gesamtes Objekt</Badge>
+              )}
+            </TableCell>
             <TableCell className="text-right tabular-nums">
               {formatFileSize(document.fileSizeBytes)}
             </TableCell>

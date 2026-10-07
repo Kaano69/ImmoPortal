@@ -29,6 +29,13 @@
       "when": 1791369287536,
       "tag": "0003_gifted_runaways",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1791369818959,
+      "tag": "0004_chief_johnny_blaze",
+      "breakpoints": true
     }
   ]
 }

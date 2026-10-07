@@ -19,11 +19,32 @@ const uploadSchema = z
   .object({
     propertyId: optionalId,
     unitId: optionalId,
-    category: z.enum(DOCUMENT_CATEGORIES).default("other"),
+    category: z
+      .enum(DOCUMENT_CATEGORIES, { error: "Bitte eine gültige Kategorie wählen." })
+      .default("sonstiges"),
+    tags: z.preprocess((value) => (typeof value === "string" ? parseTags(value) : []), z.array(z.string())),
   })
   .refine((v) => v.propertyId !== undefined || v.unitId !== undefined, {
     message: "Ein Dokument muss einem Objekt oder einer Einheit zugeordnet sein.",
   });
+
+const MAX_TAGS = 10;
+const MAX_TAG_LENGTH = 30;
+
+/** Kommagetrennte Schlagwörter → bereinigte, eindeutige Liste (ohne Groß-/Kleinschreibung zu ändern). */
+function parseTags(input: string): string[] {
+  const seen = new Set<string>();
+  const tags: string[] = [];
+  for (const raw of input.split(",")) {
+    const tag = raw.trim().replace(/\s+/g, " ").slice(0, MAX_TAG_LENGTH);
+    const key = tag.toLocaleLowerCase("de");
+    if (tag === "" || seen.has(key)) continue;
+    seen.add(key);
+    tags.push(tag);
+    if (tags.length === MAX_TAGS) break;
+  }
+  return tags;
+}
 
 const idSchema = z.string().min(1);
 
@@ -39,6 +60,7 @@ export async function uploadDocumentAction(
     propertyId: formData.get("propertyId") ?? undefined,
     unitId: formData.get("unitId") ?? undefined,
     category: formData.get("category") ?? undefined,
+    tags: formData.get("tags") ?? undefined,
   });
   if (!parsed.success) {
     return {
@@ -46,7 +68,7 @@ export async function uploadDocumentAction(
       error: parsed.error.issues[0]?.message ?? "Ungültige Eingabe.",
     };
   }
-  const { unitId, category } = parsed.data;
+  const { unitId, category, tags } = parsed.data;
   let { propertyId } = parsed.data;
 
   // Verweise prüfen; bei einer Einheit gehört die Datei ins Verzeichnis ihres Objekts.
@@ -93,6 +115,7 @@ export async function uploadDocumentAction(
         filePath,
         fileSizeBytes: file.size,
         category,
+        tags,
       })
       .returning({ id: documents.id })
       .all();

@@ -4,9 +4,11 @@ import { CheckCircle2, FileUp, Loader2, XCircle } from "lucide-react";
 import { useRef, useState, useTransition, type DragEvent } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import { DOCUMENT_CATEGORY_LABELS } from "@/lib/labels";
+import type { DocumentCategory } from "@/db/schema";
+import { DOCUMENT_CATEGORY_HINTS, DOCUMENT_CATEGORY_LABELS } from "@/lib/labels";
 import { cn } from "@/lib/utils";
 
 import { uploadDocumentAction } from "../actions";
@@ -22,6 +24,8 @@ type UploadResult = { fileName: string; error?: string };
 type DocumentUploadProps = {
   propertyId: string;
   units: { id: string; unitNumber: string }[];
+  defaultCategory?: DocumentCategory;
+  defaultUnitId?: string;
 };
 
 /** Clientseitige Vorprüfung; die verbindliche Validierung passiert serverseitig. */
@@ -34,10 +38,16 @@ function precheck(file: File): string | undefined {
   return undefined;
 }
 
-export function DocumentUpload({ propertyId, units }: DocumentUploadProps) {
+export function DocumentUpload({
+  propertyId,
+  units,
+  defaultCategory = "sonstiges",
+  defaultUnitId = "",
+}: DocumentUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [category, setCategory] = useState("contract");
-  const [unitId, setUnitId] = useState("");
+  const [category, setCategory] = useState<string>(defaultCategory);
+  const [unitId, setUnitId] = useState(defaultUnitId);
+  const [tags, setTags] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [results, setResults] = useState<UploadResult[]>([]);
   const [isPending, startTransition] = useTransition();
@@ -60,6 +70,7 @@ export function DocumentUpload({ propertyId, units }: DocumentUploadProps) {
         formData.set("propertyId", propertyId);
         formData.set("category", category);
         if (unitId) formData.set("unitId", unitId);
+        if (tags.trim()) formData.set("tags", tags);
 
         try {
           const result = await uploadDocumentAction(formData);
@@ -101,6 +112,9 @@ export function DocumentUpload({ propertyId, units }: DocumentUploadProps) {
               </option>
             ))}
           </Select>
+          <p className="text-xs text-muted-foreground">
+            {DOCUMENT_CATEGORY_HINTS[category as DocumentCategory]}
+          </p>
         </div>
         <div className="grid gap-2">
           <Label htmlFor="upload-unit">
@@ -120,6 +134,22 @@ export function DocumentUpload({ propertyId, units }: DocumentUploadProps) {
             ))}
           </Select>
         </div>
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="upload-tags">
+          Schlagwörter <span className="font-normal text-muted-foreground">(optional)</span>
+        </Label>
+        <Input
+          id="upload-tags"
+          value={tags}
+          onChange={(event) => setTags(event.target.value)}
+          disabled={isPending}
+          placeholder="z. B. Dach, 2026, Angebot"
+        />
+        <p className="text-xs text-muted-foreground">
+          Mit Komma trennen, höchstens 10. Gilt für alle Dateien dieses Uploads.
+        </p>
       </div>
 
       <div

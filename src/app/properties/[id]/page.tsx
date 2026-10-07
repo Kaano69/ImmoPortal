@@ -6,8 +6,7 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DocumentUpload } from "@/features/documents/components/document-upload";
-import { DocumentsTable } from "@/features/documents/components/documents-table";
+import { DocumentArchive } from "@/features/documents/components/document-archive";
 import { getMonthlyCashflow } from "@/features/finance/actions";
 import { FinanceTab } from "@/features/finance/components/finance-tab";
 import { PropertyDangerActions } from "@/features/properties/components/property-danger-actions";
@@ -196,26 +195,12 @@ export default async function PropertyDetailPage({ params, searchParams }: PageP
           </Card>
         </TabsContent>
 
-        <TabsContent value="documents" className="grid gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Dokument hochladen</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <DocumentUpload
-                propertyId={property.id}
-                units={units.map((unit) => ({ id: unit.id, unitNumber: unit.unitNumber }))}
-              />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Archiv ({documents.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <DocumentsTable documents={documents} />
-            </CardContent>
-          </Card>
+        <TabsContent value="documents">
+          <DocumentArchive
+            propertyId={property.id}
+            documents={documents}
+            units={units.map((unit) => ({ id: unit.id, unitNumber: unit.unitNumber }))}
+          />
         </TabsContent>
 
         <TabsContent value="finance">

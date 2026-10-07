@@ -20,11 +20,19 @@ import {
 // ---------------------------------------------------------------------------
 
 export const UNIT_TYPES = ["apartment", "commercial", "parking"] as const;
+/** Hauptkategorien, spiegeln die Ordnerstruktur der OneDrive-Dokumentenablage. */
 export const DOCUMENT_CATEGORIES = [
-  "contract",
-  "invoice",
-  "protocol",
-  "other",
+  "01_kauf_eigentum",
+  "02_finanzierung",
+  "03_versicherungen",
+  "04_steuern_behoerden",
+  "05_versorger",
+  "06_kosten_rechnungen",
+  "07_instandhaltung_sanierung",
+  "08_nebenkosten",
+  "09_mietvertraege_mieter",
+  "10_mietrecht_mahnungen",
+  "sonstiges",
 ] as const;
 export const TRANSACTION_TYPES = [
   "rent_incoming",
@@ -149,7 +157,12 @@ export const documents = sqliteTable(
     fileSizeBytes: integer("file_size_bytes").notNull(),
     category: text("category", { enum: DOCUMENT_CATEGORIES })
       .notNull()
-      .default("other"),
+      .default("sonstiges"),
+    /** Freie Schlagwörter als JSON-Array. */
+    tags: text("tags", { mode: "json" })
+      .$type<string[]>()
+      .notNull()
+      .default(sql`'[]'`),
     createdAt: createdAt(),
   },
   (t) => [
