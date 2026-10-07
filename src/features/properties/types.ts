@@ -13,6 +13,11 @@ export const PROPERTY_FIELDS = [
   "annualCosts",
   "annualMaintenanceReserve",
   "vacancyReserve",
+  "purchaseDate",
+  "acquisitionCost",
+  "loanBalance",
+  "loanBalanceDate",
+  "loanInterest",
 ] as const;
 
 export type PropertyField = (typeof PROPERTY_FIELDS)[number];

@@ -1,6 +1,6 @@
 "use client";
 
-import { Calculator, LayoutDashboard } from "lucide-react";
+import { Calculator, HandCoins, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 const LINKS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/tools/target-rent", label: "Zielmieten-Rechner", icon: Calculator },
+  { href: "/tools/property-sale", label: "Verkaufsrechner", icon: HandCoins },
 ] as const;
 
 export function MainNav() {

@@ -6,6 +6,7 @@ import { useMemo, useState, type ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { NumberField } from "@/components/number-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -136,54 +137,6 @@ function parseValues(values: FormValues): Parsed {
       vacancyPercent: values.vacancy,
     },
   };
-}
-
-function NumberField({
-  id,
-  label,
-  unit,
-  value,
-  onChange,
-  hint,
-  placeholder,
-}: {
-  id: string;
-  label: string;
-  unit: string;
-  value: string;
-  onChange: (value: string) => void;
-  hint?: ReactNode;
-  placeholder?: string;
-}) {
-  const invalid = (() => {
-    const parsed = parseNumberInput(value);
-    return parsed !== undefined && (!Number.isFinite(parsed) || parsed < 0);
-  })();
-
-  return (
-    <div className="grid content-start gap-2">
-      <Label htmlFor={id}>{label}</Label>
-      <div className="relative">
-        <Input
-          id={id}
-          inputMode="decimal"
-          value={value}
-          placeholder={placeholder}
-          aria-invalid={invalid ? true : undefined}
-          className="pr-14"
-          onChange={(event) => onChange(event.target.value)}
-        />
-        <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
-          {unit}
-        </span>
-      </div>
-      {invalid ? (
-        <p className="text-xs text-destructive">Bitte eine gültige, nicht negative Zahl angeben.</p>
-      ) : hint ? (
-        <p className="text-xs text-muted-foreground">{hint}</p>
-      ) : null}
-    </div>
-  );
 }
 
 function ResultRow({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {

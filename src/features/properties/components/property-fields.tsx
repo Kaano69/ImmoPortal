@@ -17,6 +17,11 @@ export type PropertyDefaults = {
   annualCosts: string;
   annualMaintenanceReserve: string;
   vacancyReserve: string;
+  purchaseDate: string;
+  acquisitionCost: string;
+  loanBalance: string;
+  loanBalanceDate: string;
+  loanInterest: string;
 };
 
 export function PropertyFields({
@@ -138,6 +143,55 @@ export function PropertyFields({
             defaultValue={defaults?.vacancyReserve}
             inputMode="decimal"
             placeholder="z. B. 3"
+          />
+        </div>
+      </fieldset>
+
+      <fieldset className="grid gap-4 rounded-md border p-4">
+        <legend className="px-1 text-sm font-medium">Kauf &amp; Darlehensstand</legend>
+        <p className="-mt-2 text-xs text-muted-foreground">
+          Grundlage für den Verkaufs- &amp; Exit-Rechner.
+        </p>
+        <div className="grid grid-cols-2 gap-4">
+          <InputField
+            name="purchaseDate"
+            label="Kaufdatum"
+            state={state}
+            type="date"
+            defaultValue={defaults?.purchaseDate}
+            hint="Für die 10-Jahres-Frist (§ 23 EStG)."
+          />
+          <InputField
+            name="acquisitionCost"
+            label="Bereinigte Anschaffungskosten (€)"
+            state={state}
+            defaultValue={defaults?.acquisitionCost}
+            inputMode="decimal"
+            placeholder="z. B. 505.353,18"
+            hint="Kaufpreis + Nebenkosten + Renovierung."
+          />
+          <InputField
+            name="loanBalance"
+            label="Restschuld (€)"
+            state={state}
+            defaultValue={defaults?.loanBalance}
+            inputMode="decimal"
+            placeholder="z. B. 445.236,05"
+          />
+          <InputField
+            name="loanBalanceDate"
+            label="Stand der Restschuld"
+            state={state}
+            type="date"
+            defaultValue={defaults?.loanBalanceDate}
+          />
+          <InputField
+            name="loanInterest"
+            label="Darlehenszins (% p. a.)"
+            state={state}
+            defaultValue={defaults?.loanInterest}
+            inputMode="decimal"
+            placeholder="z. B. 4,22"
           />
         </div>
       </fieldset>

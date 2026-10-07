@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CashflowCard } from "@/features/dashboard/components/cashflow-card";
 import { KpiCards } from "@/features/dashboard/components/kpi-cards";
 import { getMonthlyCashflow } from "@/features/finance/actions";
+import { RemindersSection } from "@/features/reminders/components/reminders-section";
+import { getReminders } from "@/features/reminders/queries";
 import { CreatePropertyDialog } from "@/features/properties/components/create-property-dialog";
 import { PropertiesTable } from "@/features/properties/components/properties-table";
 import { getDashboardData } from "@/features/properties/queries";
@@ -23,6 +25,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     getMonthlyCashflow(),
   ]);
 
+  const reminders = await getReminders(cashflow);
+
   return (
     <main className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-8 sm:px-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
@@ -38,6 +42,8 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       <KpiCards data={data} />
 
       <CashflowCard cashflow={cashflow} />
+
+      <RemindersSection reminders={reminders} />
 
       <Card>
         <CardHeader>

@@ -91,6 +91,14 @@ export default async function PropertyDetailPage({ params, searchParams }: PageP
               marketValue: centsToInput(property.marketValueCents),
               buildYear: property.buildYear === null ? "" : String(property.buildYear),
               purchaseYear: property.purchaseYear === null ? "" : String(property.purchaseYear),
+              purchaseDate: property.purchaseDate ?? "",
+              acquisitionCost: centsToInput(property.acquisitionCostCents),
+              loanBalance: centsToInput(property.loanBalanceCents),
+              loanBalanceDate: property.loanBalanceDate ?? "",
+              loanInterest:
+                property.loanInterestPercent === null
+                  ? ""
+                  : String(property.loanInterestPercent).replace(".", ","),
               monthlyLoanPayment: centsToInput(property.monthlyLoanPaymentCents),
               annualCosts: centsToInput(property.annualCostsCents),
               annualMaintenanceReserve: centsToInput(property.annualMaintenanceReserveCents),
@@ -170,6 +178,38 @@ export default async function PropertyDetailPage({ params, searchParams }: PageP
                 property.vacancyReservePercent === null
                   ? "–"
                   : formatPercent(property.vacancyReservePercent)
+              }
+            />
+          </dl>
+          <dl className="mt-6 grid grid-cols-2 gap-4 border-t pt-4 sm:grid-cols-5">
+            <MasterDatum
+              label="Kaufdatum"
+              value={property.purchaseDate === null ? "–" : formatDate(property.purchaseDate)}
+            />
+            <MasterDatum
+              label="Anschaffungskosten"
+              value={
+                property.acquisitionCostCents === null
+                  ? "–"
+                  : formatCentsToEuro(property.acquisitionCostCents)
+              }
+            />
+            <MasterDatum
+              label="Restschuld"
+              value={
+                property.loanBalanceCents === null
+                  ? "–"
+                  : `${formatCentsToEuro(property.loanBalanceCents)}${
+                      property.loanBalanceDate ? ` (${formatDate(property.loanBalanceDate)})` : ""
+                    }`
+              }
+            />
+            <MasterDatum
+              label="Darlehenszins"
+              value={
+                property.loanInterestPercent === null
+                  ? "–"
+                  : formatPercent(property.loanInterestPercent)
               }
             />
           </dl>

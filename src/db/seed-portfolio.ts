@@ -6,7 +6,7 @@
  *
  * - Idempotent: Ein Objekt, dessen Name bereits existiert, wird nicht neu angelegt.
  *   Bestehende Daten werden nie gelöscht oder überschrieben; nur noch leere
- *   Finanzierungsfelder (Darlehen, Kosten, Rücklage, Leerstand) werden ergänzt.
+ *   Finanzierungs- und Kauffelder (Darlehen, Kosten, Rücklage, Leerstand, Kaufdatum, Restschuld) werden ergänzt.
  * - Jedes Objekt wird in einer eigenen Transaktion angelegt (ganz oder gar nicht).
  * - Beträge stehen als Cent-Integer im Skript; Datumsangaben als ISO-Text.
  *
@@ -52,6 +52,14 @@ type SeedProperty = {
   annualCostsCents: number;
   annualMaintenanceReserveCents: number;
   vacancyReservePercent: number;
+  /** Kaufdatum (ISO); `null`, wenn nur das Kaufjahr bekannt ist. */
+  purchaseDate: string | null;
+  /** Bereinigte Anschaffungskosten (Kostenbasis) laut Excel. */
+  acquisitionCostCents: number;
+  /** Restschuld, Stichtag und Zins laut Excel (Blatt „Objekte & Annahmen“, Darlehen). */
+  loanBalanceCents: number;
+  loanBalanceDate: string;
+  loanInterestPercent: number;
   units: SeedUnit[];
 };
 
@@ -68,6 +76,11 @@ const PORTFOLIO: SeedProperty[] = [
     annualCostsCents: 650_749 + 200_640, // Objektkosten 6.507,49 + USt-Zahlung 2.006,40
     annualMaintenanceReserveCents: 409_200,
     vacancyReservePercent: 3,
+    purchaseDate: "2024-05-08",
+    acquisitionCostCents: 50_535_318, // Kaufpreis 460.000 + Nebenkosten 45.353,18
+    loanBalanceCents: 44_523_605,
+    loanBalanceDate: "2026-07-22",
+    loanInterestPercent: 4.22,
     units: [
       {
         unitNumber: "Gewerbe EG",
@@ -145,6 +158,11 @@ const PORTFOLIO: SeedProperty[] = [
     annualCostsCents: 660_000 + 432_060, // Hausgeld/Kosten 6.600 + USt-Zahlung 4.320,60
     annualMaintenanceReserveCents: 120_000,
     vacancyReservePercent: 2,
+    purchaseDate: null, // Kaufdatum laut Excel nur Annahme (12.07.2024), laut Auftrag Kaufjahr 2025
+    acquisitionCostCents: 23_000_000,
+    loanBalanceCents: 22_377_050,
+    loanBalanceDate: "2026-07-23",
+    loanInterestPercent: 3.96,
     units: [
       {
         unitNumber: "Gewerbeeinheit",
@@ -173,6 +191,11 @@ const PORTFOLIO: SeedProperty[] = [
     annualCostsCents: 337_974, // Hausgeld 268/Monat + Grundsteuer 163,74/Jahr
     annualMaintenanceReserveCents: 72_000,
     vacancyReservePercent: 2,
+    purchaseDate: "2020-09-14", // vorläufig aus dem Grundbuch-Eintrag
+    acquisitionCostCents: 12_000_000,
+    loanBalanceCents: 11_783_722,
+    loanBalanceDate: "2026-07-23",
+    loanInterestPercent: 3.94,
     units: [
       {
         unitNumber: "WE A10",
@@ -202,6 +225,11 @@ const PORTFOLIO: SeedProperty[] = [
     annualCostsCents: 120_000,
     annualMaintenanceReserveCents: 259_200,
     vacancyReservePercent: 5,
+    purchaseDate: "2026-07-01", // Kaufvertrag unterschrieben, liegt noch nicht vor
+    acquisitionCostCents: 27_500_000,
+    loanBalanceCents: 27_500_000,
+    loanBalanceDate: "2026-07-23",
+    loanInterestPercent: 4.1,
     units: [
       {
         unitNumber: "Gesamtes Haus",
@@ -234,6 +262,11 @@ function seedProperty(seed: SeedProperty): "created" | "skipped" {
         annualCostsCents: sql`coalesce(${properties.annualCostsCents}, ${seed.annualCostsCents})`,
         annualMaintenanceReserveCents: sql`coalesce(${properties.annualMaintenanceReserveCents}, ${seed.annualMaintenanceReserveCents})`,
         vacancyReservePercent: sql`coalesce(${properties.vacancyReservePercent}, ${seed.vacancyReservePercent})`,
+        purchaseDate: sql`coalesce(${properties.purchaseDate}, ${seed.purchaseDate})`,
+        acquisitionCostCents: sql`coalesce(${properties.acquisitionCostCents}, ${seed.acquisitionCostCents})`,
+        loanBalanceCents: sql`coalesce(${properties.loanBalanceCents}, ${seed.loanBalanceCents})`,
+        loanBalanceDate: sql`coalesce(${properties.loanBalanceDate}, ${seed.loanBalanceDate})`,
+        loanInterestPercent: sql`coalesce(${properties.loanInterestPercent}, ${seed.loanInterestPercent})`,
       })
       .where(eq(properties.id, existing.id))
       .run();
@@ -255,6 +288,11 @@ function seedProperty(seed: SeedProperty): "created" | "skipped" {
         annualCostsCents: seed.annualCostsCents,
         annualMaintenanceReserveCents: seed.annualMaintenanceReserveCents,
         vacancyReservePercent: seed.vacancyReservePercent,
+        purchaseDate: seed.purchaseDate,
+        acquisitionCostCents: seed.acquisitionCostCents,
+        loanBalanceCents: seed.loanBalanceCents,
+        loanBalanceDate: seed.loanBalanceDate,
+        loanInterestPercent: seed.loanInterestPercent,
       })
       .returning({ id: properties.id })
       .get();
@@ -303,6 +341,6 @@ for (const property of PORTFOLIO) {
   console.log(
     result === "created"
       ? `✓ ${property.name}: ${property.units.length} Einheit(en), ${leaseCount} Mietvertrag/-verträge angelegt`
-      : `– ${property.name}: existiert bereits (nur leere Finanzierungsfelder ergänzt)`,
+      : `– ${property.name}: existiert bereits (nur leere Finanzierungs-/Kauffelder ergänzt)`,
   );
 }

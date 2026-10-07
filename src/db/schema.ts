@@ -75,6 +75,15 @@ export const properties = sqliteTable("properties", {
   annualMaintenanceReserveCents: integer("annual_maintenance_reserve_cents"),
   /** Kalkulierter Leerstand in Prozent (0–100). */
   vacancyReservePercent: real("vacancy_reserve_percent"),
+  // Kauf & Darlehensstand (Grundlage für den Verkaufsrechner)
+  /** Exaktes Kaufdatum (ISO), maßgeblich für die 10-Jahres-Frist nach § 23 EStG. */
+  purchaseDate: text("purchase_date"),
+  /** Bereinigte Anschaffungskosten: Kaufpreis + Kaufnebenkosten + wertrelevante Renovierung. */
+  acquisitionCostCents: integer("acquisition_cost_cents"),
+  loanBalanceCents: integer("loan_balance_cents"),
+  /** Stichtag der Restschuld (ISO). */
+  loanBalanceDate: text("loan_balance_date"),
+  loanInterestPercent: real("loan_interest_percent"),
   isArchived: integer("is_archived", { mode: "boolean" }).notNull().default(false),
   createdAt: createdAt(),
 });

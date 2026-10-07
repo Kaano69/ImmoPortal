@@ -9,6 +9,7 @@ import { leases, properties, transactions, units } from "@/db/schema";
 import type { ActionResult } from "@/lib/action-result";
 import {
   errorState,
+  isoDate,
   optionalNumber,
   parseForm,
 } from "@/lib/form-state";
@@ -28,6 +29,12 @@ const year = (message: string) =>
 const euro = (invalidMessage: string) =>
   optionalNumber(invalidMessage, (schema) =>
     schema.min(0, "Der Betrag darf nicht negativ sein.").max(1_000_000_000, "Der Betrag ist zu groß."),
+  );
+
+const optionalDate = (message: string) =>
+  z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    isoDate(message).optional(),
   );
 
 const toCents = (euro: number | undefined): number | null =>
@@ -53,6 +60,13 @@ const propertySchema = z.object({
   vacancyReserve: optionalNumber("Bitte einen gültigen Prozentwert angeben.", (schema) =>
     schema.min(0, "Der Wert darf nicht negativ sein.").max(50, "Maximal 50 %."),
   ),
+  purchaseDate: optionalDate("Bitte ein gültiges Kaufdatum angeben."),
+  acquisitionCost: euro("Bitte einen gültigen Betrag angeben."),
+  loanBalance: euro("Bitte einen gültigen Betrag angeben."),
+  loanBalanceDate: optionalDate("Bitte ein gültiges Datum angeben."),
+  loanInterest: optionalNumber("Bitte einen gültigen Prozentwert angeben.", (schema) =>
+    schema.min(0, "Der Wert darf nicht negativ sein.").max(30, "Maximal 30 %."),
+  ),
   buildYear: year("Bitte ein gültiges Baujahr angeben."),
   purchaseYear: year("Bitte ein gültiges Kaufjahr angeben."),
 });
@@ -69,6 +83,11 @@ function toRow(data: z.output<typeof propertySchema>) {
     annualCostsCents: toCents(data.annualCosts),
     annualMaintenanceReserveCents: toCents(data.annualMaintenanceReserve),
     vacancyReservePercent: data.vacancyReserve ?? null,
+    purchaseDate: data.purchaseDate ?? null,
+    acquisitionCostCents: toCents(data.acquisitionCost),
+    loanBalanceCents: toCents(data.loanBalance),
+    loanBalanceDate: data.loanBalanceDate ?? null,
+    loanInterestPercent: data.loanInterest ?? null,
     buildYear: data.buildYear ?? null,
     purchaseYear: data.purchaseYear ?? null,
   };
