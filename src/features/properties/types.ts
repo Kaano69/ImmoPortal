@@ -9,6 +9,10 @@ export const PROPERTY_FIELDS = [
   "marketValue",
   "buildYear",
   "purchaseYear",
+  "monthlyLoanPayment",
+  "annualCosts",
+  "annualMaintenanceReserve",
+  "vacancyReserve",
 ] as const;
 
 export type PropertyField = (typeof PROPERTY_FIELDS)[number];

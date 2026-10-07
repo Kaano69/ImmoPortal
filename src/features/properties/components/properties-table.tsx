@@ -1,6 +1,7 @@
 import { Building2 } from "lucide-react";
 import Link from "next/link";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -42,8 +43,15 @@ export function PropertiesTable({ properties }: { properties: PropertyRow[] }) {
       </TableHeader>
       <TableBody>
         {properties.map((property) => (
-          <TableRow key={property.id}>
-            <TableCell className="font-medium">{property.name}</TableCell>
+          <TableRow key={property.id} className={property.isArchived ? "text-muted-foreground" : undefined}>
+            <TableCell className="font-medium">
+              {property.name}
+              {property.isArchived ? (
+                <Badge variant="secondary" className="ml-2">
+                  Archiviert
+                </Badge>
+              ) : null}
+            </TableCell>
             <TableCell>
               {property.street}, {property.zip} {property.city}
             </TableCell>

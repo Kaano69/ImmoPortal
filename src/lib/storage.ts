@@ -86,6 +86,14 @@ export async function saveDocumentFile(
   return relativePath;
 }
 
+/** Löscht den gesamten Ordner `./data/documents/[subfolder]` samt Inhalt (z. B. beim Löschen eines Objekts). */
+export async function deleteDocumentFolder(subfolder: string): Promise<void> {
+  if (!SUBFOLDER_PATTERN.test(subfolder)) {
+    throw new StorageError("Ungültiger Zielordner.");
+  }
+  await fs.rm(resolveDocumentPath(subfolder), { recursive: true, force: true });
+}
+
 /** Löscht eine Dokumentdatei. Eine bereits fehlende Datei ist kein Fehler. */
 export async function deleteDocumentFile(relativePath: string): Promise<void> {
   const absolutePath = resolveDocumentPath(relativePath);

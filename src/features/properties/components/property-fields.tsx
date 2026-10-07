@@ -13,6 +13,10 @@ export type PropertyDefaults = {
   marketValue: string;
   buildYear: string;
   purchaseYear: string;
+  monthlyLoanPayment: string;
+  annualCosts: string;
+  annualMaintenanceReserve: string;
+  vacancyReserve: string;
 };
 
 export function PropertyFields({
@@ -94,6 +98,49 @@ export function PropertyFields({
           placeholder="z. B. 2019"
         />
       </div>
+
+      <fieldset className="grid gap-4 rounded-md border p-4">
+        <legend className="px-1 text-sm font-medium">
+          Finanzierung &amp; Kalkulation
+        </legend>
+        <p className="-mt-2 text-xs text-muted-foreground">
+          Grundlage für den Zielmieten-Rechner.
+        </p>
+        <div className="grid grid-cols-2 gap-4">
+          <InputField
+            name="monthlyLoanPayment"
+            label="Darlehensrate (€ / Monat)"
+            state={state}
+            defaultValue={defaults?.monthlyLoanPayment}
+            inputMode="decimal"
+            placeholder="z. B. 2.265"
+          />
+          <InputField
+            name="annualCosts"
+            label="Nicht umlegbare Kosten (€ / Jahr)"
+            state={state}
+            defaultValue={defaults?.annualCosts}
+            inputMode="decimal"
+            placeholder="z. B. 8.513,89"
+          />
+          <InputField
+            name="annualMaintenanceReserve"
+            label="Instandhaltungsrücklage (€ / Jahr)"
+            state={state}
+            defaultValue={defaults?.annualMaintenanceReserve}
+            inputMode="decimal"
+            placeholder="z. B. 4.092"
+          />
+          <InputField
+            name="vacancyReserve"
+            label="Kalkulierter Leerstand (%)"
+            state={state}
+            defaultValue={defaults?.vacancyReserve}
+            inputMode="decimal"
+            placeholder="z. B. 3"
+          />
+        </div>
+      </fieldset>
     </>
   );
 }

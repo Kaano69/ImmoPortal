@@ -60,6 +60,14 @@ export const properties = sqliteTable("properties", {
   purchaseYear: integer("purchase_year"),
   totalSqm: real("total_sqm"),
   marketValueCents: integer("market_value_cents"),
+  // Finanzierung & Kalkulation (Grundlage für den Zielmieten-Rechner)
+  monthlyLoanPaymentCents: integer("monthly_loan_payment_cents"),
+  /** Laufende, nicht umlegbare Kosten pro Jahr inkl. abzuführender Umsatzsteuer. */
+  annualCostsCents: integer("annual_costs_cents"),
+  annualMaintenanceReserveCents: integer("annual_maintenance_reserve_cents"),
+  /** Kalkulierter Leerstand in Prozent (0–100). */
+  vacancyReservePercent: real("vacancy_reserve_percent"),
+  isArchived: integer("is_archived", { mode: "boolean" }).notNull().default(false),
   createdAt: createdAt(),
 });
 

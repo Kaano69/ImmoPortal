@@ -1,4 +1,4 @@
-import { asc, count, eq } from "drizzle-orm";
+import { and, asc, count, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
@@ -17,6 +17,7 @@ export type PropertyRow = {
   zip: string;
   city: string;
   unitCount: number;
+  isArchived: boolean;
   /** Eingetragene Gesamtfläche, sonst Summe der Einheitsflächen, sonst `null`. */
   totalSqm: number | null;
 };
@@ -31,14 +32,18 @@ export type DashboardData = {
   /** Leerstandsquote in Prozent (0–100), bezogen auf die Einheitenanzahl. */
   vacancyRatePercent: number;
   documentCount: number;
+  /** Anzahl archivierter Objekte (nicht in den Kennzahlen enthalten). */
+  archivedCount: number;
 };
 
 /**
  * Lädt alle Liegenschaften samt Einheiten und Mietverträgen und leitet die
  * Dashboard-Kennzahlen ab. Eine Einheit gilt als vermietet, wenn sie einen
  * aktiven Mietvertrag hat (Mietverträge sind die maßgebliche Quelle).
+ * Archivierte Objekte zählen nie in die Kennzahlen; mit `includeArchived` erscheinen
+ * sie zusätzlich in der Objektliste.
  */
-export async function getDashboardData(): Promise<DashboardData> {
+export async function getDashboardData(includeArchived = false): Promise<DashboardData> {
   const rows = await db.query.properties.findMany({
     orderBy: [asc(properties.name)],
     with: { units: { with: { leases: true } } },
@@ -48,16 +53,19 @@ export async function getDashboardData(): Promise<DashboardData> {
   let totalUnits = 0;
   let rentedUnits = 0;
 
-  const propertyRows = rows.map<PropertyRow>((property) => {
+  const propertyRows = rows
+    .filter((property) => includeArchived || !property.isArchived)
+    .map<PropertyRow>((property) => {
     let unitSqm = 0;
     let hasUnitSqm = false;
 
     for (const unit of property.units) {
-      totalUnits += 1;
       if (unit.sqm !== null) {
         unitSqm += unit.sqm;
         hasUnitSqm = true;
       }
+      if (property.isArchived) continue;
+      totalUnits += 1;
       if (unit.leases.some((lease) => lease.isActive)) {
         rentedUnits += 1;
         targetColdRentCents += unit.coldRentCents;
@@ -71,13 +79,19 @@ export async function getDashboardData(): Promise<DashboardData> {
       zip: property.zip,
       city: property.city,
       unitCount: property.units.length,
+      isArchived: property.isArchived,
       totalSqm: property.totalSqm ?? (hasUnitSqm ? unitSqm : null),
     };
   });
 
   const vacantUnits = totalUnits - rentedUnits;
   const documentCount =
-    db.select({ value: count() }).from(documents).get()?.value ?? 0;
+    db
+      .select({ value: count() })
+      .from(documents)
+      .innerJoin(properties, eq(documents.propertyId, properties.id))
+      .where(eq(properties.isArchived, false))
+      .get()?.value ?? 0;
 
   return {
     properties: propertyRows,
@@ -87,6 +101,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     vacantUnits,
     vacancyRatePercent: totalUnits === 0 ? 0 : (vacantUnits / totalUnits) * 100,
     documentCount,
+    archivedCount: rows.filter((property) => property.isArchived).length,
   };
 }
 

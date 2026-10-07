@@ -1,3 +1,6 @@
+import Link from "next/link";
+
+import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CashflowCard } from "@/features/dashboard/components/cashflow-card";
 import { KpiCards } from "@/features/dashboard/components/kpi-cards";
@@ -5,13 +8,18 @@ import { getMonthlyCashflow } from "@/features/finance/actions";
 import { CreatePropertyDialog } from "@/features/properties/components/create-property-dialog";
 import { PropertiesTable } from "@/features/properties/components/properties-table";
 import { getDashboardData } from "@/features/properties/queries";
+import { cn } from "@/lib/utils";
 
 // Die Daten kommen aus der lokalen SQLite-DB und dürfen nicht beim Build eingefroren werden.
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+type PageProps = { searchParams: Promise<{ archived?: string }> };
+
+export default async function DashboardPage({ searchParams }: PageProps) {
+  const { archived } = await searchParams;
+  const showArchived = archived === "1";
   const [data, cashflow] = await Promise.all([
-    getDashboardData(),
+    getDashboardData(showArchived),
     getMonthlyCashflow(),
   ]);
 
@@ -34,6 +42,16 @@ export default async function DashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Immobilien</CardTitle>
+          {data.archivedCount > 0 ? (
+            <Link
+              href={showArchived ? "/" : "/?archived=1"}
+              className={cn(buttonVariants({ variant: "ghost", size: "sm" }), "w-fit")}
+            >
+              {showArchived
+                ? "Archivierte ausblenden"
+                : `Archivierte anzeigen (${data.archivedCount})`}
+            </Link>
+          ) : null}
         </CardHeader>
         <CardContent>
           <PropertiesTable properties={data.properties} />

@@ -1,11 +1,11 @@
 "use server";
 
-import { and, asc, eq, gte, isNull, lte, or } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, isNull, lte, or } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { TRANSACTION_TYPES, transactions, units } from "@/db/schema";
+import { TRANSACTION_TYPES, properties, transactions, units } from "@/db/schema";
 import type { ActionResult } from "@/lib/action-result";
 import {
   currentYearMonth,
@@ -256,14 +256,24 @@ export async function getMonthlyCashflow(
   const bounds = monthBounds(month);
   const today = todayIso();
 
+  // Ohne Objektangabe gelten alle aktiven (nicht archivierten) Objekte.
+  const scopeIds = propertyId
+    ? [propertyId]
+    : db
+        .select({ id: properties.id })
+        .from(properties)
+        .where(eq(properties.isArchived, false))
+        .all()
+        .map((row) => row.id);
+
   const unitRows = await db.query.units.findMany({
-    where: propertyId ? eq(units.propertyId, propertyId) : undefined,
+    where: inArray(units.propertyId, scopeIds),
     with: { property: true, leases: { with: { tenant: true } } },
   });
 
   const transactionRows = await db.query.transactions.findMany({
     where: and(
-      propertyId ? eq(transactions.propertyId, propertyId) : undefined,
+      inArray(transactions.propertyId, scopeIds),
       or(
         and(gte(transactions.dueDate, bounds.start), lte(transactions.dueDate, bounds.end)),
         and(isNull(transactions.paidAt), lte(transactions.dueDate, bounds.end)),

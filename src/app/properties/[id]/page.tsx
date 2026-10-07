@@ -3,18 +3,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DocumentUpload } from "@/features/documents/components/document-upload";
 import { DocumentsTable } from "@/features/documents/components/documents-table";
 import { getMonthlyCashflow } from "@/features/finance/actions";
 import { FinanceTab } from "@/features/finance/components/finance-tab";
+import { PropertyDangerActions } from "@/features/properties/components/property-danger-actions";
 import { EditPropertyDialog } from "@/features/properties/components/edit-property-dialog";
 import { getPropertyDetail } from "@/features/properties/queries";
 import { CreateUnitDialog } from "@/features/units/components/unit-dialogs";
 import { UnitsTable } from "@/features/units/components/units-table";
 import { currentYearMonth, isYearMonth } from "@/lib/dates";
-import { formatCentsToEuro, formatDate, formatSqm } from "@/lib/formatters";
+import { formatCentsToEuro, formatDate, formatPercent, formatSqm } from "@/lib/formatters";
 
 // Die Daten kommen aus der lokalen SQLite-DB und dürfen nicht beim Build eingefroren werden.
 export const dynamic = "force-dynamic";
@@ -31,6 +33,10 @@ export async function generateMetadata({ params }: Pick<PageProps, "params">): P
   const { id } = await params;
   const detail = await getPropertyDetail(id);
   return { title: detail ? `${detail.property.name} – Immobiliencockpit` : "Immobiliencockpit" };
+}
+
+function centsToInput(cents: number | null): string {
+  return cents === null ? "" : (cents / 100).toFixed(2).replace(".", ",");
 }
 
 function MasterDatum({ label, value }: { label: string; value: string }) {
@@ -66,11 +72,15 @@ export default async function PropertyDetailPage({ params, searchParams }: PageP
         </Link>
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{property.name}</h1>
+            <h1 className="flex flex-wrap items-center gap-2 text-2xl font-bold tracking-tight">
+              {property.name}
+              {property.isArchived ? <Badge variant="secondary">Archiviert</Badge> : null}
+            </h1>
             <p className="text-sm text-muted-foreground">
               {property.street}, {property.zip} {property.city}
             </p>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
           <EditPropertyDialog
             propertyId={property.id}
             defaults={{
@@ -79,14 +89,24 @@ export default async function PropertyDetailPage({ params, searchParams }: PageP
               zip: property.zip,
               city: property.city,
               totalSqm: property.totalSqm === null ? "" : String(property.totalSqm).replace(".", ","),
-              marketValue:
-                property.marketValueCents === null
-                  ? ""
-                  : (property.marketValueCents / 100).toFixed(2).replace(".", ","),
+              marketValue: centsToInput(property.marketValueCents),
               buildYear: property.buildYear === null ? "" : String(property.buildYear),
               purchaseYear: property.purchaseYear === null ? "" : String(property.purchaseYear),
+              monthlyLoanPayment: centsToInput(property.monthlyLoanPaymentCents),
+              annualCosts: centsToInput(property.annualCostsCents),
+              annualMaintenanceReserve: centsToInput(property.annualMaintenanceReserveCents),
+              vacancyReserve:
+                property.vacancyReservePercent === null
+                  ? ""
+                  : String(property.vacancyReservePercent).replace(".", ","),
             }}
           />
+          <PropertyDangerActions
+            propertyId={property.id}
+            propertyName={property.name}
+            isArchived={property.isArchived}
+          />
+          </div>
         </header>
       </div>
 
@@ -119,6 +139,40 @@ export default async function PropertyDetailPage({ params, searchParams }: PageP
               }
             />
             <MasterDatum label="Angelegt am" value={formatDate(property.createdAt)} />
+          </dl>
+          <dl className="mt-6 grid grid-cols-2 gap-4 border-t pt-4 sm:grid-cols-4">
+            <MasterDatum
+              label="Darlehensrate / Monat"
+              value={
+                property.monthlyLoanPaymentCents === null
+                  ? "–"
+                  : formatCentsToEuro(property.monthlyLoanPaymentCents)
+              }
+            />
+            <MasterDatum
+              label="Nicht umlegbare Kosten / Jahr"
+              value={
+                property.annualCostsCents === null
+                  ? "–"
+                  : formatCentsToEuro(property.annualCostsCents)
+              }
+            />
+            <MasterDatum
+              label="Instandhaltungsrücklage / Jahr"
+              value={
+                property.annualMaintenanceReserveCents === null
+                  ? "–"
+                  : formatCentsToEuro(property.annualMaintenanceReserveCents)
+              }
+            />
+            <MasterDatum
+              label="Kalkulierter Leerstand"
+              value={
+                property.vacancyReservePercent === null
+                  ? "–"
+                  : formatPercent(property.vacancyReservePercent)
+              }
+            />
           </dl>
         </CardContent>
       </Card>
