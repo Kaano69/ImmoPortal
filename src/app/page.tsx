@@ -3,7 +3,8 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CashflowCard } from "@/features/dashboard/components/cashflow-card";
-import { KpiCards } from "@/features/dashboard/components/kpi-cards";
+import { KpiBoard } from "@/features/dashboard/components/kpi-board";
+import { getKpiItems } from "@/features/dashboard/components/kpi-cards";
 import { getMonthlyCashflow } from "@/features/finance/actions";
 import { RemindersSection } from "@/features/reminders/components/reminders-section";
 import { getReminders } from "@/features/reminders/queries";
@@ -39,9 +40,17 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         <CreatePropertyDialog />
       </header>
 
-      <KpiCards data={data} />
-
-      <CashflowCard cashflow={cashflow} />
+      <KpiBoard
+        items={[
+          ...getKpiItems(data),
+          {
+            id: "cashflow",
+            label: "Cashflow aktueller Monat",
+            wide: true,
+            node: <CashflowCard cashflow={cashflow} />,
+          },
+        ]}
+      />
 
       <RemindersSection reminders={reminders} />
 

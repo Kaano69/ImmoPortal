@@ -7,6 +7,8 @@ import { formatCentsToEuro, formatPercent } from "@/lib/formatters";
 
 import type { DashboardData } from "@/features/properties/queries";
 
+import type { KpiItem } from "./kpi-board";
+
 type KpiCardProps = {
   title: string;
   icon: ComponentType<{ className?: string }>;
@@ -43,45 +45,65 @@ function vacancyBadge(ratePercent: number): {
   return { variant: "destructive", label: "Hoher Leerstand" };
 }
 
-export function KpiCards({ data }: { data: DashboardData }) {
+/** Die einzelnen KPI-Karten des Dashboards; ausblendbar über das Anzeige-Menü. */
+export function getKpiItems(data: DashboardData): KpiItem[] {
   const badge = vacancyBadge(data.vacancyRatePercent);
 
-  return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      <KpiCard
-        title="Soll-Kaltmiete / Monat"
-        icon={Banknote}
-        hint="Aus allen aktiven Mietverträgen"
-      >
-        {formatCentsToEuro(data.targetColdRentCents)}
-      </KpiCard>
-
-      <KpiCard
-        title="Leerstandsquote"
-        icon={Percent}
-        hint={`${data.vacantUnits} von ${data.totalUnits} Einheiten leer`}
-      >
-        {formatPercent(data.vacancyRatePercent)}
-        <Badge variant={badge.variant}>{badge.label}</Badge>
-      </KpiCard>
-
-      <KpiCard
-        title="Einheiten-Status"
-        icon={DoorOpen}
-        hint={data.totalUnits === 0 ? "Noch keine Einheiten angelegt" : undefined}
-      >
-        <span>
-          {data.rentedUnits} von {data.totalUnits}
-          <span className="text-sm font-normal text-muted-foreground">
-            {" "}
-            Einheiten vermietet
+  return [
+    {
+      id: "target-rent",
+      label: "Soll-Kaltmiete / Monat",
+      node: (
+        <KpiCard
+          title="Soll-Kaltmiete / Monat"
+          icon={Banknote}
+          hint="Aus allen aktiven Mietverträgen"
+        >
+          {formatCentsToEuro(data.targetColdRentCents)}
+        </KpiCard>
+      ),
+    },
+    {
+      id: "vacancy",
+      label: "Leerstandsquote",
+      node: (
+        <KpiCard
+          title="Leerstandsquote"
+          icon={Percent}
+          hint={`${data.vacantUnits} von ${data.totalUnits} Einheiten leer`}
+        >
+          {formatPercent(data.vacancyRatePercent)}
+          <Badge variant={badge.variant}>{badge.label}</Badge>
+        </KpiCard>
+      ),
+    },
+    {
+      id: "units",
+      label: "Einheiten-Status",
+      node: (
+        <KpiCard
+          title="Einheiten-Status"
+          icon={DoorOpen}
+          hint={data.totalUnits === 0 ? "Noch keine Einheiten angelegt" : undefined}
+        >
+          <span>
+            {data.rentedUnits} von {data.totalUnits}
+            <span className="text-sm font-normal text-muted-foreground">
+              {" "}
+              Einheiten vermietet
+            </span>
           </span>
-        </span>
-      </KpiCard>
-
-      <KpiCard title="Archivierte Dokumente" icon={FileText}>
-        {data.documentCount}
-      </KpiCard>
-    </div>
-  );
+        </KpiCard>
+      ),
+    },
+    {
+      id: "documents",
+      label: "Archivierte Dokumente",
+      node: (
+        <KpiCard title="Archivierte Dokumente" icon={FileText}>
+          {data.documentCount}
+        </KpiCard>
+      ),
+    },
+  ];
 }

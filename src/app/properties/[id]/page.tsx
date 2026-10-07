@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
 
 type PageProps = {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ tab?: string; month?: string }>;
+  searchParams: Promise<{ tab?: string; month?: string; unit?: string }>;
 };
 
 const TABS = ["units", "documents", "finance"] as const;
@@ -49,7 +49,7 @@ function MasterDatum({ label, value }: { label: string; value: string }) {
 
 export default async function PropertyDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
-  const { tab, month } = await searchParams;
+  const { tab, month, unit: unitFilter } = await searchParams;
   const detail = await getPropertyDetail(id);
   if (!detail) notFound();
 
@@ -58,6 +58,8 @@ export default async function PropertyDetailPage({ params, searchParams }: PageP
   const cashflow = await getMonthlyCashflow(id, yearMonth);
 
   const { property, units, documents, tenants } = detail;
+  // Direktlink aus der Schnellansicht: nur die gewählte Einheit zeigen.
+  const focusedUnit = unitFilter ? units.find((unit) => unit.id === unitFilter) : undefined;
 
   return (
     <main className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-8 sm:px-6">
@@ -230,7 +232,20 @@ export default async function PropertyDetailPage({ params, searchParams }: PageP
               <CreateUnitDialog propertyId={property.id} />
             </CardHeader>
             <CardContent>
-              <UnitsTable units={units} tenants={tenants} />
+              {focusedUnit ? (
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-md border bg-accent/40 px-3 py-2 text-sm">
+                  <span>
+                    Gefiltert: <span className="font-medium">{focusedUnit.unitNumber}</span>
+                  </span>
+                  <Link
+                    href={`/properties/${property.id}`}
+                    className="font-medium underline-offset-4 hover:underline"
+                  >
+                    Alle Einheiten anzeigen
+                  </Link>
+                </div>
+              ) : null}
+              <UnitsTable units={focusedUnit ? [focusedUnit] : units} tenants={tenants} />
             </CardContent>
           </Card>
         </TabsContent>

@@ -10,6 +10,17 @@ import {
   type UnitType,
 } from "@/db/schema";
 
+/** Kurzinfo zu einer Einheit für die Schnellansicht in der Objektliste. */
+export type UnitSummary = {
+  id: string;
+  unitNumber: string;
+  type: UnitType;
+  sqm: number | null;
+  coldRentCents: number;
+  additionalCostsCents: number;
+  tenantName: string | null;
+};
+
 export type PropertyRow = {
   id: string;
   name: string;
@@ -17,6 +28,7 @@ export type PropertyRow = {
   zip: string;
   city: string;
   unitCount: number;
+  units: UnitSummary[];
   isArchived: boolean;
   /** Eingetragene Gesamtfläche, sonst Summe der Einheitsflächen, sonst `null`. */
   totalSqm: number | null;
@@ -46,7 +58,7 @@ export type DashboardData = {
 export async function getDashboardData(includeArchived = false): Promise<DashboardData> {
   const rows = await db.query.properties.findMany({
     orderBy: [asc(properties.name)],
-    with: { units: { with: { leases: true } } },
+    with: { units: { with: { leases: { with: { tenant: true } } } } },
   });
 
   let targetColdRentCents = 0;
@@ -79,6 +91,20 @@ export async function getDashboardData(includeArchived = false): Promise<Dashboa
       zip: property.zip,
       city: property.city,
       unitCount: property.units.length,
+      units: property.units
+        .map<UnitSummary>((unit) => {
+          const lease = unit.leases.find((candidate) => candidate.isActive);
+          return {
+            id: unit.id,
+            unitNumber: unit.unitNumber,
+            type: unit.type,
+            sqm: unit.sqm,
+            coldRentCents: unit.coldRentCents,
+            additionalCostsCents: unit.additionalCostsCents,
+            tenantName: lease ? `${lease.tenant.firstName} ${lease.tenant.lastName}`.trim() : null,
+          };
+        })
+        .sort((a, b) => a.unitNumber.localeCompare(b.unitNumber, "de", { numeric: true })),
       isArchived: property.isArchived,
       totalSqm: property.totalSqm ?? (hasUnitSqm ? unitSqm : null),
     };

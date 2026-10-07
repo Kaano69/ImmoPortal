@@ -14,6 +14,7 @@ import {
 import { formatSqm } from "@/lib/formatters";
 
 import type { PropertyRow } from "../queries";
+import { UnitsQuickView } from "./units-quick-view";
 
 export function PropertiesTable({ properties }: { properties: PropertyRow[] }) {
   if (properties.length === 0) {
@@ -55,8 +56,12 @@ export function PropertiesTable({ properties }: { properties: PropertyRow[] }) {
             <TableCell>
               {property.street}, {property.zip} {property.city}
             </TableCell>
-            <TableCell className="text-right tabular-nums">
-              {property.unitCount}
+            <TableCell className="text-right">
+              <UnitsQuickView
+                propertyId={property.id}
+                propertyName={property.name}
+                units={property.units}
+              />
             </TableCell>
             <TableCell className="text-right tabular-nums">
               {property.totalSqm === null ? "–" : formatSqm(property.totalSqm)}
