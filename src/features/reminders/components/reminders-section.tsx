@@ -10,6 +10,10 @@ import type { Reminders } from "../queries";
 
 const MAX_ITEMS = 5;
 
+/** Neutraler Listeneintrag: dezenter Rahmen, Hover-Hintergrund, nie breiter als die Karte. */
+const ITEM_CLASS =
+  "min-w-0 rounded-md border border-border/50 px-3 py-2 transition-colors hover:bg-muted/50";
+
 function ReminderCard({
   title,
   icon: Icon,
@@ -29,7 +33,7 @@ function ReminderCard({
 }) {
   const visible = children.slice(0, MAX_ITEMS);
   return (
-    <Card className="gap-3">
+    <Card className="min-w-0 gap-3">
       <CardHeader className="flex flex-row items-center justify-between gap-2">
         <CardTitle className="flex items-center gap-2 text-sm font-medium">
           <Icon className="size-4 text-muted-foreground" aria-hidden />
@@ -37,15 +41,15 @@ function ReminderCard({
         </CardTitle>
         {count > 0 ? <Badge variant={tone}>{count}</Badge> : null}
       </CardHeader>
-      <CardContent className="grid gap-3">
-        <p className="text-xs text-muted-foreground">{description}</p>
+      <CardContent className="grid min-w-0 gap-3">
+        <p className="text-xs leading-relaxed break-words text-muted-foreground">{description}</p>
         {count === 0 ? (
           <p className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
             <CheckCircle2 className="size-4" aria-hidden />
             {emptyText}
           </p>
         ) : (
-          <ul className="grid gap-2 text-sm">
+          <ul className="grid min-w-0 gap-2 text-sm">
             {visible}
             {children.length > MAX_ITEMS ? (
               <li className="text-xs text-muted-foreground">
@@ -79,24 +83,36 @@ export function RemindersSection({ reminders }: { reminders: Reminders }) {
           emptyText="Alle Mieten dieses Monats sind eingegangen."
         >
           {payments.map((payment) => (
-            <li key={payment.key} className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
+            <li key={payment.key} className={`${ITEM_CLASS} flex items-start justify-between gap-3`}>
+              <div className="min-w-0 flex-1">
                 <Link
                   href={`/properties/${payment.propertyId}?tab=finance`}
                   className="block truncate font-medium hover:underline"
+                  title={`${payment.unitNumber ? `${payment.unitNumber} · ` : ""}${payment.propertyName}`}
                 >
                   {payment.unitNumber ? `${payment.unitNumber} · ` : ""}
                   {payment.propertyName}
                 </Link>
-                <span className="block truncate text-xs text-muted-foreground">
+                <span
+                  className="block truncate text-xs text-muted-foreground"
+                  title={`${payment.label} · fällig ${formatDate(payment.dueDate)}`}
+                >
                   {payment.label} · fällig {formatDate(payment.dueDate)}
                 </span>
               </div>
-              <div className="flex shrink-0 flex-col items-end gap-1">
-                <span className="tabular-nums">{formatCentsToEuro(payment.amountCents)}</span>
-                <Badge variant={payment.overdue ? "destructive" : "warning"}>
+              <div className="flex shrink-0 flex-col items-end gap-0.5 text-right">
+                <span
+                  className={`tabular-nums ${payment.overdue ? "font-medium text-destructive" : ""}`}
+                >
+                  {formatCentsToEuro(payment.amountCents)}
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span
+                    aria-hidden
+                    className={`size-1.5 rounded-full ${payment.overdue ? "bg-destructive" : "bg-amber-500"}`}
+                  />
                   {payment.overdue ? "Überfällig" : "Ausstehend"}
-                </Badge>
+                </span>
               </div>
             </li>
           ))}
@@ -111,8 +127,8 @@ export function RemindersSection({ reminders }: { reminders: Reminders }) {
           emptyText="Keine Mietverhältnisse über 15 Monate."
         >
           {rentIncreases.map((item) => (
-            <li key={item.leaseId} className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
+            <li key={item.leaseId} className={`${ITEM_CLASS} flex items-start justify-between gap-3`}>
+              <div className="min-w-0 flex-1">
                 <Link
                   href={`/properties/${item.propertyId}`}
                   className="block truncate font-medium hover:underline"
@@ -123,7 +139,7 @@ export function RemindersSection({ reminders }: { reminders: Reminders }) {
                   {item.tenantName} · seit {formatDate(item.startDate)}
                 </span>
               </div>
-              <div className="flex shrink-0 flex-col items-end gap-1">
+              <div className="flex shrink-0 flex-col items-end gap-0.5 text-right">
                 <span className="tabular-nums">{formatCentsToEuro(item.coldRentCents)}</span>
                 <span className="text-xs text-muted-foreground">{item.monthsRunning} Monate</span>
               </div>
@@ -140,7 +156,7 @@ export function RemindersSection({ reminders }: { reminders: Reminders }) {
           emptyText="Alle Pflichtunterlagen sind vorhanden."
         >
           {documents.map((item) => (
-            <li key={item.propertyId} className="grid gap-1">
+            <li key={item.propertyId} className={`${ITEM_CLASS} grid gap-1.5`}>
               <Link
                 href={`/properties/${item.propertyId}?tab=documents`}
                 className="truncate font-medium hover:underline"
