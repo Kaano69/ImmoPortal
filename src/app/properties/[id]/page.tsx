@@ -245,7 +245,14 @@ export default async function PropertyDetailPage({ params, searchParams }: PageP
                   </Link>
                 </div>
               ) : null}
-              <UnitsTable units={focusedUnit ? [focusedUnit] : units} tenants={tenants} />
+              <UnitsTable
+                units={focusedUnit ? [focusedUnit] : units}
+                tenants={tenants}
+                proofDocuments={documents.map((document) => ({
+                  id: document.id,
+                  fileName: document.fileName,
+                }))}
+              />
             </CardContent>
           </Card>
         </TabsContent>

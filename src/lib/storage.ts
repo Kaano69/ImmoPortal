@@ -86,6 +86,28 @@ export async function saveDocumentFile(
   return relativePath;
 }
 
+/**
+ * Verschiebt eine bereits gespeicherte Dokumentdatei in einen anderen Unterordner
+ * (z. B. vom Posteingang `_inbox` in den Objektordner `[propertyId]`), ohne sie neu zu
+ * validieren. Der Dateiname (inkl. UUID-Präfix) bleibt erhalten, damit er eindeutig bleibt.
+ */
+export async function moveDocumentFile(
+  relativePath: string,
+  newSubfolder: string,
+): Promise<string> {
+  if (!SUBFOLDER_PATTERN.test(newSubfolder)) {
+    throw new StorageError("Ungültiger Zielordner.");
+  }
+  const sourceAbsolute = resolveDocumentPath(relativePath);
+  const newRelativePath = path.posix.join(newSubfolder, path.basename(relativePath));
+  const newAbsolute = resolveDocumentPath(newRelativePath);
+
+  await fs.mkdir(path.dirname(newAbsolute), { recursive: true });
+  await fs.rename(sourceAbsolute, newAbsolute);
+
+  return newRelativePath;
+}
+
 /** Löscht den gesamten Ordner `./data/documents/[subfolder]` samt Inhalt (z. B. beim Löschen eines Objekts). */
 export async function deleteDocumentFolder(subfolder: string): Promise<void> {
   if (!SUBFOLDER_PATTERN.test(subfolder)) {

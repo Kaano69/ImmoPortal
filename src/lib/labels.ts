@@ -1,4 +1,4 @@
-import type { DocumentCategory, TransactionType, UnitType } from "@/db/schema";
+import type { DepositStatus, DocumentCategory, TransactionType, UnitType } from "@/db/schema";
 
 // Nur Typ-Import: diese Datei wird auch in Client-Komponenten verwendet.
 
@@ -41,4 +41,11 @@ export const TRANSACTION_TYPE_LABELS: Record<TransactionType, string> = {
   rent_incoming: "Mieteingang / Sonderzahlung",
   maintenance: "Instandhaltung",
   utility_cost: "Betriebs-/Nebenkosten",
+};
+
+export const DEPOSIT_STATUS_LABELS: Record<DepositStatus, string> = {
+  missing: "Keine Kaution hinterlegt",
+  received: "Erhalten (Bar/Überweisung)",
+  bank_deposit: "Kautionskonto angelegt",
+  guarantee: "Kautionsbürgschaft",
 };

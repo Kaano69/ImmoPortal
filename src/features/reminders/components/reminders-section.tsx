@@ -1,4 +1,4 @@
-import { BellRing, CheckCircle2, FileWarning, TrendingUp, Wallet } from "lucide-react";
+import { BellRing, CheckCircle2, FileWarning, ShieldAlert, TrendingUp, Wallet } from "lucide-react";
 import Link from "next/link";
 import type { ComponentType, ReactNode } from "react";
 
@@ -64,7 +64,7 @@ function ReminderCard({
 }
 
 export function RemindersSection({ reminders }: { reminders: Reminders }) {
-  const { rentIncreases, payments, documents } = reminders;
+  const { rentIncreases, payments, documents, deposits } = reminders;
   const overdueCount = payments.filter((payment) => payment.overdue).length;
 
   return (
@@ -73,7 +73,7 @@ export function RemindersSection({ reminders }: { reminders: Reminders }) {
         <BellRing className="size-5" aria-hidden />
         Erinnerungen &amp; Fristen
       </h2>
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
         <ReminderCard
           title="Zahlungs-Mahnungen"
           icon={Wallet}
@@ -170,6 +170,32 @@ export function RemindersSection({ reminders }: { reminders: Reminders }) {
                   </Badge>
                 ))}
               </div>
+            </li>
+          ))}
+        </ReminderCard>
+
+        <ReminderCard
+          title="Kautions-Check"
+          icon={ShieldAlert}
+          count={deposits.length}
+          tone="warning"
+          description="Laufende Mietverträge mit Soll-Kaution, die weder als erhalten erfasst noch mit einem Nachweis-Dokument belegt sind."
+          emptyText="Alle Kautionen sind erfasst oder nachgewiesen."
+        >
+          {deposits.map((item) => (
+            <li key={item.leaseId} className={`${ITEM_CLASS} flex items-start justify-between gap-3`}>
+              <div className="min-w-0 flex-1">
+                <Link
+                  href={`/properties/${item.propertyId}`}
+                  className="block truncate font-medium hover:underline"
+                >
+                  {item.unitNumber} · {item.propertyName}
+                </Link>
+                <span className="block truncate text-xs text-muted-foreground">
+                  {item.tenantName}
+                </span>
+              </div>
+              <span className="shrink-0 tabular-nums">{formatCentsToEuro(item.depositCents)}</span>
             </li>
           ))}
         </ReminderCard>

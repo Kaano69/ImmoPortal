@@ -5,6 +5,7 @@ import {
   documents,
   properties,
   tenants,
+  type DepositStatus,
   type DocumentCategory,
   type Property,
   type UnitType,
@@ -143,6 +144,12 @@ export type UnitDetail = {
     tenantName: string;
     startDate: string;
     endDate: string | null;
+    depositCents: number;
+    depositStatus: DepositStatus;
+    depositReceivedCents: number;
+    depositBankAccount: string | null;
+    depositProofDocumentId: string | null;
+    depositProofFileName: string | null;
   } | null;
 };
 
@@ -168,7 +175,9 @@ export async function getPropertyDetail(id: string): Promise<PropertyDetail | nu
   const property = await db.query.properties.findFirst({
     where: eq(properties.id, id),
     with: {
-      units: { with: { leases: { with: { tenant: true } } } },
+      units: {
+        with: { leases: { with: { tenant: true, depositProofDocument: true } } },
+      },
       documents: { with: { unit: true } },
     },
   });
@@ -190,6 +199,12 @@ export async function getPropertyDetail(id: string): Promise<PropertyDetail | nu
               tenantName: `${lease.tenant.firstName} ${lease.tenant.lastName}`.trim(),
               startDate: lease.startDate,
               endDate: lease.endDate,
+              depositCents: lease.depositCents,
+              depositStatus: lease.depositStatus,
+              depositReceivedCents: lease.depositReceivedCents,
+              depositBankAccount: lease.depositBankAccount,
+              depositProofDocumentId: lease.depositProofDocumentId,
+              depositProofFileName: lease.depositProofDocument?.fileName ?? null,
             }
           : null,
       };

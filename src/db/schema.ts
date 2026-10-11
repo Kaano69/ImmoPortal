@@ -39,10 +39,20 @@ export const TRANSACTION_TYPES = [
   "maintenance",
   "utility_cost",
 ] as const;
+/** Status der Kaution eines Mietverhältnisses (analog zum Excel-Sheet „Kautionen“). */
+export const DEPOSIT_STATUSES = [
+  "missing",
+  "received",
+  "bank_deposit",
+  "guarantee",
+] as const;
+export const INBOX_STATUSES = ["pending", "processed"] as const;
 
 export type UnitType = (typeof UNIT_TYPES)[number];
 export type DocumentCategory = (typeof DOCUMENT_CATEGORIES)[number];
 export type TransactionType = (typeof TRANSACTION_TYPES)[number];
+export type DepositStatus = (typeof DEPOSIT_STATUSES)[number];
+export type InboxStatus = (typeof INBOX_STATUSES)[number];
 
 const id = () =>
   text("id")
@@ -134,8 +144,21 @@ export const leases = sqliteTable(
       .references(() => tenants.id, { onDelete: "restrict" }),
     startDate: text("start_date").notNull(),
     endDate: text("end_date"),
+    /** Soll-Kaution laut Mietvertrag. */
     depositCents: integer("deposit_cents").notNull().default(0),
     isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+    // Kautions-Tracking (analog zum Excel-Sheet „Kautionen“).
+    depositStatus: text("deposit_status", { enum: DEPOSIT_STATUSES })
+      .notNull()
+      .default("missing"),
+    /** Tatsächlich erhaltener Kautionsbetrag. */
+    depositReceivedCents: integer("deposit_received_cents").notNull().default(0),
+    /** Name des Kautions-/Treuhandkontos oder der Anlageform. */
+    depositBankAccount: text("deposit_bank_account"),
+    depositProofDocumentId: text("deposit_proof_document_id").references(
+      () => documents.id,
+      { onDelete: "set null" },
+    ),
   },
   (t) => [
     index("leases_unit_id_idx").on(t.unitId),
@@ -178,6 +201,24 @@ export const documents = sqliteTable(
     index("documents_property_id_idx").on(t.propertyId),
     index("documents_unit_id_idx").on(t.unitId),
   ],
+);
+
+export const documentInbox = sqliteTable(
+  "document_inbox",
+  {
+    id: id(),
+    fileName: text("file_name").notNull(),
+    /** Pfad relativ zu `./data/documents` (liegt bis zur Ablage im Ordner `_inbox`). */
+    filePath: text("file_path").notNull(),
+    fileSizeBytes: integer("file_size_bytes").notNull(),
+    detectedPropertyId: text("detected_property_id").references(() => properties.id, {
+      onDelete: "set null",
+    }),
+    detectedCategory: text("detected_category", { enum: DOCUMENT_CATEGORIES }),
+    status: text("status", { enum: INBOX_STATUSES }).notNull().default("pending"),
+    createdAt: createdAt(),
+  },
+  (t) => [index("document_inbox_status_idx").on(t.status)],
 );
 
 export const transactions = sqliteTable(
@@ -236,6 +277,10 @@ export const leasesRelations = relations(leases, ({ one }) => ({
     fields: [leases.tenantId],
     references: [tenants.id],
   }),
+  depositProofDocument: one(documents, {
+    fields: [leases.depositProofDocumentId],
+    references: [documents.id],
+  }),
 }));
 
 export const documentsRelations = relations(documents, ({ one }) => ({
@@ -260,6 +305,13 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
   }),
 }));
 
+export const documentInboxRelations = relations(documentInbox, ({ one }) => ({
+  detectedProperty: one(properties, {
+    fields: [documentInbox.detectedPropertyId],
+    references: [properties.id],
+  }),
+}));
+
 // ---------------------------------------------------------------------------
 // Typen
 // ---------------------------------------------------------------------------
@@ -276,3 +328,5 @@ export type Document = typeof documents.$inferSelect;
 export type NewDocument = typeof documents.$inferInsert;
 export type Transaction = typeof transactions.$inferSelect;
 export type NewTransaction = typeof transactions.$inferInsert;
+export type DocumentInbox = typeof documentInbox.$inferSelect;
+export type NewDocumentInbox = typeof documentInbox.$inferInsert;

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { db } from "@/db";
-import { leases, tenants, units } from "@/db/schema";
+import { DEPOSIT_STATUSES, documents, leases, tenants, units } from "@/db/schema";
 import {
   errorState,
   isoDate,
@@ -15,8 +15,10 @@ import {
 } from "@/lib/form-state";
 
 import {
+  DEPOSIT_FIELDS,
   END_LEASE_FIELDS,
   LEASE_FIELDS,
+  type DepositFormState,
   type EndLeaseFormState,
   type LeaseFormState,
 } from "./types";
@@ -174,6 +176,65 @@ export async function endLeaseAction(
     return errorState("Das Mietverhältnis konnte nicht beendet werden.", parsed.values);
   }
 
+  revalidatePath("/");
+  if (unit) revalidatePath(`/properties/${unit.propertyId}`);
+  return { status: "success" };
+}
+
+// ---------------------------------------------------------------------------
+// Kautions-Tracking
+// ---------------------------------------------------------------------------
+
+const depositSchema = z.object({
+  status: z.enum(DEPOSIT_STATUSES, { error: "Bitte einen gültigen Status wählen." }),
+  receivedAmount: optionalEuroCents("Bitte einen gültigen Betrag angeben."),
+  bankAccount: optionalText(120),
+  proofDocumentId: optionalText(64),
+});
+
+/** Aktualisiert Status, erhaltenen Betrag, Konto und Nachweis-Dokument einer Kaution. */
+export async function updateDepositAction(
+  _previousState: DepositFormState,
+  formData: FormData,
+): Promise<DepositFormState> {
+  const parsed = parseForm(depositSchema, DEPOSIT_FIELDS, formData);
+  if (!parsed.ok) return parsed.state;
+  const { data, values } = parsed;
+
+  const leaseId = readString(formData, "leaseId");
+  const lease = db.select().from(leases).where(eq(leases.id, leaseId)).get();
+  if (!lease) return errorState("Das Mietverhältnis wurde nicht gefunden.", values);
+
+  if (data.proofDocumentId) {
+    const unit = db.select().from(units).where(eq(units.id, lease.unitId)).get();
+    const proof = db
+      .select({ id: documents.id, propertyId: documents.propertyId })
+      .from(documents)
+      .where(eq(documents.id, data.proofDocumentId))
+      .get();
+    if (!proof || !unit || proof.propertyId !== unit.propertyId) {
+      return errorState("Bitte prüfe deine Eingaben.", values, {
+        proofDocumentId: "Das gewählte Dokument gehört nicht zu diesem Objekt.",
+      });
+    }
+  }
+
+  try {
+    db.update(leases)
+      .set({
+        depositStatus: data.status,
+        depositReceivedCents: data.receivedAmount,
+        depositBankAccount: data.bankAccount ?? null,
+        depositProofDocumentId: data.proofDocumentId ?? null,
+      })
+      .where(eq(leases.id, leaseId))
+      .run();
+  } catch (error) {
+    console.error("Kaution konnte nicht aktualisiert werden:", error);
+    return errorState("Die Kaution konnte nicht gespeichert werden.", values);
+  }
+
+  const unit = db.select().from(units).where(eq(units.id, lease.unitId)).get();
   revalidatePath("/");
   if (unit) revalidatePath(`/properties/${unit.propertyId}`);
   return { status: "success" };

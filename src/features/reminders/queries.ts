@@ -6,6 +6,15 @@ import { findMissingDocuments } from "@/features/documents/required-documents";
 import type { MonthlyCashflow } from "@/features/finance/types";
 import { addMonths, diffYears, todayIso } from "@/lib/dates";
 
+export type DepositReminder = {
+  leaseId: string;
+  propertyId: string;
+  propertyName: string;
+  unitNumber: string;
+  tenantName: string;
+  depositCents: number;
+};
+
 /** Frühestens nach so vielen Monaten mit unveränderter Miete kann nach § 558 BGB eine Erhöhung verlangt werden. */
 export const RENT_INCREASE_MONTHS = 15;
 
@@ -45,6 +54,7 @@ export type Reminders = {
   rentIncreases: RentIncreaseReminder[];
   payments: PaymentReminder[];
   documents: DocumentReminder[];
+  deposits: DepositReminder[];
 };
 
 /**
@@ -132,10 +142,39 @@ export async function getDocumentReminders(): Promise<DocumentReminder[]> {
     .sort((a, b) => a.propertyName.localeCompare(b.propertyName, "de"));
 }
 
+/**
+ * Kautions-Check: laufende Mietverträge mit einer Soll-Kaution, die weder als erhalten
+ * erfasst noch mit einem Nachweis-Dokument belegt sind.
+ */
+export async function getDepositReminders(): Promise<DepositReminder[]> {
+  const rows = await db.query.leases.findMany({
+    where: eq(leases.isActive, true),
+    with: { tenant: true, unit: { with: { property: true } } },
+  });
+
+  return rows
+    .filter(
+      (lease) =>
+        !lease.unit.property.isArchived &&
+        lease.depositCents > 0 &&
+        (lease.depositStatus === "missing" || lease.depositProofDocumentId === null),
+    )
+    .map<DepositReminder>((lease) => ({
+      leaseId: lease.id,
+      propertyId: lease.unit.propertyId,
+      propertyName: lease.unit.property.name,
+      unitNumber: lease.unit.unitNumber,
+      tenantName: `${lease.tenant.firstName} ${lease.tenant.lastName}`.trim(),
+      depositCents: lease.depositCents,
+    }))
+    .sort((a, b) => a.propertyName.localeCompare(b.propertyName, "de"));
+}
+
 export async function getReminders(cashflow: MonthlyCashflow): Promise<Reminders> {
-  const [rentIncreases, documents] = await Promise.all([
+  const [rentIncreases, documents, deposits] = await Promise.all([
     getRentIncreaseReminders(),
     getDocumentReminders(),
+    getDepositReminders(),
   ]);
-  return { rentIncreases, payments: getPaymentReminders(cashflow), documents };
+  return { rentIncreases, payments: getPaymentReminders(cashflow), documents, deposits };
 }

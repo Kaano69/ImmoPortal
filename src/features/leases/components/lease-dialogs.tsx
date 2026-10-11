@@ -1,14 +1,22 @@
 "use client";
 
-import { UserPlus, UserX } from "lucide-react";
+import { ShieldCheck, UserPlus, UserX } from "lucide-react";
 
 import { ActionDialog } from "@/components/action-dialog";
 import { InputField, SelectField } from "@/components/form-field";
 import { Button } from "@/components/ui/button";
+import type { DepositStatus } from "@/db/schema";
+import { DEPOSIT_STATUS_LABELS } from "@/lib/labels";
 
-import { createLeaseAction, endLeaseAction } from "../actions";
+import { createLeaseAction, endLeaseAction, updateDepositAction } from "../actions";
 
 export type TenantOption = { id: string; name: string };
+export type ProofDocumentOption = { id: string; fileName: string };
+
+const DEPOSIT_STATUS_OPTIONS = Object.entries(DEPOSIT_STATUS_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}));
 
 function today(): string {
   // Lokales Datum im Format YYYY-MM-DD (schwedische Locale), nicht UTC.
@@ -121,6 +129,83 @@ export function EndLeaseDialog({
             type="date"
             defaultValue={today()}
             required
+          />
+        </>
+      )}
+    </ActionDialog>
+  );
+}
+
+function centsToInput(cents: number): string {
+  return cents === 0 ? "" : (cents / 100).toFixed(2).replace(".", ",");
+}
+
+export function DepositDialog({
+  leaseId,
+  tenantName,
+  depositCents,
+  defaults,
+  proofDocuments,
+}: {
+  leaseId: string;
+  tenantName: string;
+  depositCents: number;
+  defaults: {
+    status: DepositStatus;
+    receivedAmountCents: number;
+    bankAccount: string | null;
+    proofDocumentId: string | null;
+  };
+  proofDocuments: ProofDocumentOption[];
+}) {
+  return (
+    <ActionDialog
+      trigger={
+        <Button variant="ghost" size="sm">
+          <ShieldCheck />
+          Kaution
+        </Button>
+      }
+      title={`Kaution verwalten – ${tenantName}`}
+      description={`Soll-Kaution laut Mietvertrag: ${centsToInput(depositCents) || "0,00"} €.`}
+      action={updateDepositAction}
+    >
+      {(state) => (
+        <>
+          <input type="hidden" name="leaseId" value={leaseId} />
+          <SelectField
+            name="status"
+            label="Status"
+            state={state}
+            defaultValue={defaults.status}
+            markOptional={false}
+            options={DEPOSIT_STATUS_OPTIONS}
+          />
+          <InputField
+            name="receivedAmount"
+            label="Tatsächlich erhaltener Betrag (€)"
+            state={state}
+            defaultValue={centsToInput(defaults.receivedAmountCents)}
+            inputMode="decimal"
+            placeholder="z. B. 2.550,00"
+          />
+          <InputField
+            name="bankAccount"
+            label="Kautions-/Treuhandkonto"
+            state={state}
+            defaultValue={defaults.bankAccount ?? ""}
+            placeholder="z. B. Mietkautionskonto Sparkasse"
+          />
+          <SelectField
+            name="proofDocumentId"
+            label="Nachweis-Dokument"
+            state={state}
+            defaultValue={defaults.proofDocumentId ?? ""}
+            options={[
+              { value: "", label: "Kein Nachweis hinterlegt" },
+              ...proofDocuments.map((doc) => ({ value: doc.id, label: doc.fileName })),
+            ]}
+            hint="Lade den Nachweis vorab über „Dokument hochladen“ im Archiv dieses Objekts hoch."
           />
         </>
       )}

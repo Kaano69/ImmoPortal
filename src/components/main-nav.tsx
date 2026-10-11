@@ -1,6 +1,6 @@
 "use client";
 
-import { Calculator, HandCoins, Hammer, LayoutDashboard } from "lucide-react";
+import { Calculator, HandCoins, Hammer, Inbox, LayoutDashboard, PiggyBank } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -11,6 +11,8 @@ const LINKS = [
   { href: "/tools/target-rent", label: "Zielmieten-Rechner", icon: Calculator },
   { href: "/tools/property-sale", label: "Verkaufsrechner", icon: HandCoins },
   { href: "/tools/renovation", label: "Sanierungsrechner", icon: Hammer },
+  { href: "/tools/wealth-growth", label: "Vermögenswachstum", icon: PiggyBank },
+  { href: "/inbox", label: "Posteingang", icon: Inbox },
 ] as const;
 
 export function MainNav() {
