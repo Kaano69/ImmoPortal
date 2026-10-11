@@ -215,6 +215,8 @@ export const documentInbox = sqliteTable(
       onDelete: "set null",
     }),
     detectedCategory: text("detected_category", { enum: DOCUMENT_CATEGORIES }),
+    /** Nativer oder per OCR erkannter Volltext, Grundlage der Vorschläge oben. */
+    extractedText: text("extracted_text"),
     status: text("status", { enum: INBOX_STATUSES }).notNull().default("pending"),
     createdAt: createdAt(),
   },

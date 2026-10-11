@@ -50,6 +50,13 @@
       "when": 1791725318275,
       "tag": "0006_wealth_deposits_inbox",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1791727638313,
+      "tag": "0007_inbox_extracted_text",
+      "breakpoints": true
     }
   ]
 }

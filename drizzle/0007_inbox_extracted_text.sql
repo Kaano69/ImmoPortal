@@ -1,0 +1,1 @@
+ALTER TABLE `document_inbox` ADD `extracted_text` text;
